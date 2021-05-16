@@ -68,7 +68,7 @@ pub const TILE_WIDTH: f32 = 32.0;
 pub const MAP_WIDTH: u8 = 8;
 pub const MAP_HEIGHT: u8 = 9;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Position {
     pub x: u8,
     pub y: u8,
@@ -124,6 +124,8 @@ fn create_wall(world: &mut World, position: Position, sprite: SpriteRender) {
         position.y as f32 * TILE_WIDTH + 0.5 * TILE_WIDTH,
         10.0
     );
+
+    println!("{:?}", position);
 
     world
         .create_entity()
@@ -282,8 +284,4 @@ fn load_map(world: &mut World, map_string: String, assets: &ImageAssets) {
             }
         }
     }
-}
-
-pub fn coordinate_to_trans(coordinate: f32) -> f32 {
-    coordinate * TILE_WIDTH + 0.5 * TILE_WIDTH
 }

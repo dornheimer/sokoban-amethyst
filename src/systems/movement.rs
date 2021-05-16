@@ -1,14 +1,15 @@
-use amethyst::core::{Transform, SystemDesc};
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReaderId, Write, ReadStorage, System, SystemData, World, WriteStorage};
-use amethyst::input::{InputHandler, StringBindings, VirtualKeyCode, InputEvent};
-
-use crate::sokoban::{WINDOW_HEIGHT, WINDOW_WIDTH, TILE_WIDTH, Player, Position, Movable, Immovable};
-use amethyst::core::shrev::EventChannel;
-use amethyst::core::ecs::Entities;
 use std::collections::HashMap;
+
+use amethyst::core::{SystemDesc, Transform};
+use amethyst::core::ecs::Entities;
 use amethyst::core::ecs::world::Index;
+use amethyst::core::shrev::EventChannel;
+use amethyst::derive::SystemDesc;
+use amethyst::ecs::{Join, Read, ReaderId, ReadStorage, System, SystemData, World, Write, WriteStorage};
+use amethyst::input::{InputEvent, InputHandler, StringBindings, VirtualKeyCode};
 use amethyst::shrev::EventIterator;
+
+use crate::sokoban::{Immovable, MAP_HEIGHT, MAP_WIDTH, Movable, Player, Position, TILE_WIDTH};
 
 #[derive(Debug, Clone, Copy)]
 enum Direction {
@@ -21,10 +22,6 @@ enum Direction {
 #[derive(SystemDesc)]
 pub struct MovementSystem {
     pub reader_id: Option<ReaderId<InputEvent<StringBindings>>>,
-}
-
-impl MovementSystem {
-
 }
 
 impl<'s> System<'s> for MovementSystem {
@@ -41,24 +38,24 @@ impl<'s> System<'s> for MovementSystem {
     fn run(&mut self, (mut transforms, entities, players, movables, immovables, mut positions, mut event_channel): Self::SystemData) {
 
         let mut to_move = Vec::new();
-        let mut mov: HashMap<(u8, u8), Index> = (&entities, &movables, &transforms)
+        let mut mov: HashMap<(u8, u8), Index> = (&entities, &movables, &positions)
             .join()
-            .map(|t| ((t.2.translation().x as u8, t.2.translation().y as u8), t.0.id()))
+            .map(|t| ((t.2.x, t.2.y), t.0.id()))
             .collect::<HashMap<_, _>>();
-        let mut immov: HashMap<(u8, u8), Index> = (&entities, &immovables, &transforms)
+        let mut immov: HashMap<(u8, u8), Index> = (&entities, &immovables, &positions)
             .join()
-            .map(|t| ((t.2.translation().x as u8, t.2.translation().y as u8), t.0.id()))
+            .map(|t| ((t.2.x, t.2.y), t.0.id()))
             .collect::<HashMap<_, _>>();
 
-        for (_player, transform) in (&players, &mut transforms).join() {
+        for (_player, position) in (&players, &mut positions).join() {
             let event_iterator = event_channel.read(self.reader_id.as_mut().unwrap()).into_iter();
             if let Some(direction) = get_direction(event_iterator) {
                 println!("{:?}", direction);
                 let (start, end, is_x) = match direction {
-                    Direction::Up => (transform.translation().y as u8, WINDOW_HEIGHT as u8, false),
-                    Direction::Down => (transform.translation().y as u8, 0, false),
-                    Direction::Right => (transform.translation().x as u8, WINDOW_WIDTH as u8, true),
-                    Direction::Left => (transform.translation().x as u8, 0, true),
+                    Direction::Up => (position.y, MAP_HEIGHT, false),
+                    Direction::Down => (position.y, 0, false),
+                    Direction::Right => (position.x, MAP_WIDTH, true),
+                    Direction::Left => (position.x, 0, true),
                 };
 
                 println!("start {}, end {}, is_x {}", start, end, is_x);
@@ -71,9 +68,9 @@ impl<'s> System<'s> for MovementSystem {
 
                 for x_or_y in range {
                     let pos = if is_x {
-                        (x_or_y, transform.translation().y as u8)
+                        (x_or_y, position.y)
                     } else {
-                        (transform.translation().x as u8, x_or_y)
+                        (position.x, x_or_y)
                     };
 
                     match mov.get(&pos) {
@@ -91,45 +88,28 @@ impl<'s> System<'s> for MovementSystem {
 
         for (direction, id) in to_move {
             let transform = transforms.get_mut(entities.entity(id));
+            let position = positions.get_mut(entities.entity(id));
             if let Some(transform) = transform {
                 match direction {
-                    Direction::Up => transform.prepend_translation_y(TILE_WIDTH),
-                    Direction::Down => transform.prepend_translation_y(-TILE_WIDTH),
-                    Direction::Right => transform.prepend_translation_x(TILE_WIDTH),
-                    Direction::Left => transform.prepend_translation_x(-TILE_WIDTH),
+                    Direction::Up => {
+                        transform.prepend_translation_y(TILE_WIDTH);
+                        position.unwrap().y += 1;
+                    },
+                    Direction::Down => {
+                        transform.prepend_translation_y(-TILE_WIDTH);
+                        position.unwrap().y -= 1;
+                    },
+                    Direction::Right => {
+                        transform.prepend_translation_x(TILE_WIDTH);
+                        position.unwrap().x += 1;
+                    },
+                    Direction::Left => {
+                        transform.prepend_translation_x(-TILE_WIDTH);
+                        position.unwrap().x -= 1;
+                    },
                 };
             }
         }
-
-            // for event in channel_bindings.read(self.reader_id.as_mut().unwrap()) {
-            //     let direction = get_direction(event);
-            //     let (start, end, is_x) = match Direction {
-            //         Direction::Up => (transform.y, 0, false),
-            //         Direction::Down => (transform.y, HEIGHT, false),
-            //         Direction::Right => (transform.x, 0, true),
-            //         Direction::Left => (transform.x, WIDTH, true),
-            //         _ => continue,
-            //     };
-
-                // match event {
-                //     InputEvent::KeyPressed {
-                //         key_code: VirtualKeyCode::Up,
-                //         scancode: 103,
-                //     } => { transform.prepend_translation_y(TILE_WIDTH); },
-                //     InputEvent::KeyPressed {
-                //         key_code: VirtualKeyCode::Down,
-                //         scancode: 108,
-                //     } => { transform.prepend_translation_y(-TILE_WIDTH); },
-                //     InputEvent::KeyPressed {
-                //         key_code: VirtualKeyCode::Right,
-                //         scancode: 106,
-                //     } => { transform.prepend_translation_x(TILE_WIDTH); },
-                //     InputEvent::KeyPressed {
-                //         key_code: VirtualKeyCode::Left,
-                //         scancode: 105,
-                //     } => { transform.prepend_translation_x(-TILE_WIDTH); },
-                //     _ => ()
-                // }
     }
 
     fn setup(&mut self, world: &mut World) {
@@ -140,24 +120,24 @@ impl<'s> System<'s> for MovementSystem {
 
 fn get_direction(events: EventIterator<InputEvent<StringBindings>>) -> Option<Direction> {
     for event in events {
-        match event {
+        return match event {
             InputEvent::KeyPressed {
                 key_code: VirtualKeyCode::Up,
                 scancode: 103,
-            } => return Some(Direction::Up),
+            } => Some(Direction::Up),
             InputEvent::KeyPressed {
                 key_code: VirtualKeyCode::Down,
                 scancode: 108,
-            } => return Some(Direction::Down),
+            } => Some(Direction::Down),
             InputEvent::KeyPressed {
                 key_code: VirtualKeyCode::Right,
                 scancode: 106,
-            } => return Some(Direction::Right),
+            } => Some(Direction::Right),
             InputEvent::KeyPressed {
                 key_code: VirtualKeyCode::Left,
                 scancode: 105,
-            } => return Some(Direction::Left),
-            _ => return None
+            } => Some(Direction::Left),
+            _ => None
         };
     }
 
