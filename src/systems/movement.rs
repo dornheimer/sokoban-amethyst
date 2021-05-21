@@ -13,6 +13,7 @@ use amethyst::shrev::EventIterator;
 
 use crate::map::{MAP_HEIGHT, MAP_WIDTH, TILE_WIDTH};
 use crate::components::*;
+use crate::sokoban::Gameplay;
 
 #[derive(Debug, Clone, Copy)]
 enum Direction {
@@ -36,11 +37,12 @@ impl<'s> System<'s> for MovementSystem {
         ReadStorage<'s, Immovable>,
         WriteStorage<'s, Position>,
         Read<'s, EventChannel<InputEvent<StringBindings>>>,
+        Write<'s, Gameplay>,
     );
 
     fn run(
         &mut self,
-        (mut transforms, entities, players, movables, immovables, mut positions, event_channel): Self::SystemData,
+        (mut transforms, entities, players, movables, immovables, mut positions, event_channel, mut gameplay): Self::SystemData,
     ) {
         let mut to_move = Vec::new();
         let mov: HashMap<(u8, u8), Index> = (&entities, &movables, &positions)
@@ -86,6 +88,10 @@ impl<'s> System<'s> for MovementSystem {
                     }
                 }
             }
+        }
+
+        if to_move.len() > 0 {
+            gameplay.moves_count += 1;
         }
 
         for (direction, id) in to_move {

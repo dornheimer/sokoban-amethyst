@@ -6,6 +6,10 @@ use amethyst::{
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 };
+use amethyst::ui::{TtfFormat, UiTransform, Anchor, UiText, LineMode};
+use amethyst::core::ecs::Entity;
+use std::fmt;
+use std::fmt::Display;
 
 pub const WINDOW_HEIGHT: f32 = 600.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
@@ -21,6 +25,37 @@ impl SimpleState for Sokoban {
 
         let assets = load_assets(world);
         initialise_level(world, &assets);
+
+        world.insert(Gameplay::default());
+
+        initialise_ui(world);
+    }
+}
+
+#[derive(Default)]
+pub struct Gameplay {
+    pub state: GameplayState,
+    pub moves_count: u32
+}
+
+pub enum GameplayState {
+    Playing,
+    Won
+}
+
+impl Display for GameplayState {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str(match self {
+            GameplayState::Playing => "Playing",
+            GameplayState::Won => "Won"
+        })?;
+        Ok(())
+    }
+}
+
+impl Default for GameplayState {
+    fn default() -> Self {
+        Self::Playing
     }
 }
 
@@ -94,4 +129,68 @@ fn create_sprite_render(
         sprite_sheet: sheet_handle.clone(),
         sprite_number: 0,
     }
+}
+
+pub struct GameUi {
+    pub moves_element: Entity,
+    pub gameplay_state_element: Entity,
+}
+
+fn initialise_ui(world: &mut World) {
+    let font = world.read_resource::<Loader>().load(
+        "font/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+
+    let moves_transform = UiTransform::new(
+        "MOVES".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        -50.,
+        -50.,
+        1.,
+        300.,
+        50.,
+    );
+
+    let gameplay_state_transform = UiTransform::new(
+        "MOVES".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        -50.,
+        -200.,
+        1.,
+        300.,
+        50.,
+    );
+
+    let moves_element = world
+        .create_entity()
+        .with(moves_transform)
+        .with(UiText::new(
+            font.clone(),
+            "0".to_string(),
+            [1., 1., 1., 1.],
+            50.,
+            LineMode::Single,
+            Anchor::Middle,
+        ))
+        .build();
+
+    let gameplay_state_element = world
+        .create_entity()
+        .with(gameplay_state_transform)
+        .with(UiText::new(
+            font.clone(),
+            "0".to_string(),
+            [1., 1., 1., 1.],
+            50.,
+            LineMode::Single,
+            Anchor::Middle,
+        ))
+        .build();
+
+    world.insert(GameUi { moves_element, gameplay_state_element });
 }

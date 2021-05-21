@@ -11,6 +11,7 @@ use amethyst::{
 };
 
 use crate::sokoban::Sokoban;
+use amethyst::ui::{RenderUi, UiBundle};
 
 mod components;
 mod entities;
@@ -35,14 +36,22 @@ fn main() -> amethyst::Result<()> {
                     RenderToWindow::from_config_path(display_config_path)?
                         .with_clear([0.00196, 0.23726, 0.21765, 1.0]),
                 )
-                .with_plugin(RenderFlat2D::default()),
+                .with_plugin(RenderFlat2D::default())
+                .with_plugin(RenderUi::default())
         )?
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
+        .with_bundle(UiBundle::<StringBindings>::new())?
         .with(
             systems::MovementSystem { reader_id: None },
             "movement_system",
             &["input_system"],
+
+        )
+        .with(
+            systems::GameplayStateSystem {},
+            "gameplay_state_system",
+            &[]
         );
 
     let assets_dir = app_root.join("assets");
