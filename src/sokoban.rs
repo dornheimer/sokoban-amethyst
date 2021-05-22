@@ -1,19 +1,37 @@
-use crate::components::register_components;
-use crate::map::load_map;
+use std::fmt;
+use std::fmt::Display;
+
+use amethyst::animation::AnimationSetPrefab;
+use amethyst::assets::{Handle, Prefab, PrefabData, PrefabLoader, ProgressCounter, RonFormat};
+use amethyst::core::ecs::Entity;
+use amethyst::derive::PrefabData;
+use amethyst::error::Error;
+use amethyst::renderer::sprite::prefab::{SpriteScenePrefab, SpriteSheetPrefab};
+use amethyst::ui::{Anchor, LineMode, TtfFormat, UiText, UiTransform};
 use amethyst::{
     assets::{AssetStorage, Loader},
     core::transform::Transform,
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 };
-use amethyst::ui::{TtfFormat, UiTransform, Anchor, UiText, LineMode};
-use amethyst::core::ecs::Entity;
-use std::fmt;
-use std::fmt::Display;
-use amethyst::renderer::sprite::prefab::SpriteSheetPrefab;
+use serde::{Deserialize, Serialize};
+
+use crate::components::register_components;
+use crate::map::load_map;
 
 pub const WINDOW_HEIGHT: f32 = 600.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
+
+#[derive(Eq, PartialOrd, PartialEq, Hash, Debug, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimationId {
+    Idle,
+}
+
+#[derive(Debug, Clone, Deserialize, PrefabData)]
+pub struct MyPrefabData {
+    sprite_scene: SpriteScenePrefab,
+    animation_set: AnimationSetPrefab<AnimationId, SpriteRender>,
+}
 
 pub struct Sokoban;
 
@@ -36,19 +54,19 @@ impl SimpleState for Sokoban {
 #[derive(Default)]
 pub struct Gameplay {
     pub state: GameplayState,
-    pub moves_count: u32
+    pub moves_count: u32,
 }
 
 pub enum GameplayState {
     Playing,
-    Won
+    Won,
 }
 
 impl Display for GameplayState {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.write_str(match self {
             GameplayState::Playing => "Playing",
-            GameplayState::Won => "Won"
+            GameplayState::Won => "Won",
         })?;
         Ok(())
     }
@@ -100,10 +118,26 @@ pub struct ImageAssets {
 fn load_assets(world: &mut World) -> ImageAssets {
     ImageAssets {
         player_sprite: create_sprite_render(world, "images/player.png", "images/sprite_32x32.ron"),
-        box_red_sprite: create_sprite_render(world, "images/box_red.png", "images/sprite_32x32.ron"),
-        box_blue_sprite: create_sprite_render(world, "images/box_blue.png", "images/sprite_32x32.ron"),
-        box_spot_red_sprite: create_sprite_render(world, "images/box_spot_red.png", "images/sprite_32x32.ron"),
-        box_spot_blue_sprite: create_sprite_render(world, "images/box_spot_blue.png", "images/sprite_32x32.ron"),
+        box_red_sprite: create_sprite_render(
+            world,
+            "images/box_red.png",
+            "images/sprite_32x32.ron",
+        ),
+        box_blue_sprite: create_sprite_render(
+            world,
+            "images/box_blue.png",
+            "images/sprite_32x32.ron",
+        ),
+        box_spot_red_sprite: create_sprite_render(
+            world,
+            "images/box_spot_red.png",
+            "images/sprite_32x32.ron",
+        ),
+        box_spot_blue_sprite: create_sprite_render(
+            world,
+            "images/box_spot_blue.png",
+            "images/sprite_32x32.ron",
+        ),
         wall_sprite: create_sprite_render(world, "images/wall.png", "images/sprite_32x32.ron"),
         floor_sprite: create_sprite_render(world, "images/floor.png", "images/sprite_32x32.ron"),
     }
@@ -197,5 +231,8 @@ fn initialise_ui(world: &mut World) {
         ))
         .build();
 
-    world.insert(GameUi { moves_element, gameplay_state_element });
+    world.insert(GameUi {
+        moves_element,
+        gameplay_state_element,
+    });
 }
