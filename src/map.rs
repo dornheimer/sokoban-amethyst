@@ -1,4 +1,4 @@
-use crate::components::Position;
+use crate::components::{Position, BoxColour};
 use crate::entities::*;
 use crate::sokoban::ImageAssets;
 use amethyst::prelude::World;
@@ -36,13 +36,21 @@ pub fn load_map(world: &mut World, map_string: String, assets: &ImageAssets) {
                     create_floor(world, position, assets.floor_sprite.clone());
                     create_player(world, position, assets.player_sprite.clone());
                 }
-                "B" => {
+                "BB" => {
                     create_floor(world, position, assets.floor_sprite.clone());
-                    create_box(world, position, assets.box_sprite.clone());
+                    create_box(world, position, assets.box_blue_sprite.clone(), BoxColour::Blue);
                 }
-                "S" => {
+                "RB" => {
                     create_floor(world, position, assets.floor_sprite.clone());
-                    create_box_spot(world, position, assets.box_spot_sprite.clone());
+                    create_box(world, position, assets.box_red_sprite.clone(), BoxColour::Red);
+                }
+                "BS" => {
+                    create_floor(world, position, assets.floor_sprite.clone());
+                    create_box_spot(world, position, assets.box_spot_blue_sprite.clone(), BoxColour::Blue);
+                }
+                "RS" => {
+                    create_floor(world, position, assets.floor_sprite.clone());
+                    create_box_spot(world, position, assets.box_spot_red_sprite.clone(), BoxColour::Red);
                 }
                 "N" => (),
                 c => panic!("unrecognized map item! {}", c),

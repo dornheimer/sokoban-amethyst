@@ -23,7 +23,7 @@ pub fn create_wall(world: &mut World, position: Position, sprite: SpriteRender) 
         .build();
 }
 
-pub fn create_box(world: &mut World, position: Position, sprite: SpriteRender) {
+pub fn create_box(world: &mut World, position: Position, sprite: SpriteRender, colour: BoxColour) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(
         position.x as f32 * TILE_WIDTH + 0.5 * TILE_WIDTH,
@@ -35,13 +35,13 @@ pub fn create_box(world: &mut World, position: Position, sprite: SpriteRender) {
         .create_entity()
         .with(transform)
         .with(sprite.clone())
-        .with(Box {})
+        .with(Box { colour })
         .with(Movable)
         .with(position)
         .build();
 }
 
-pub fn create_box_spot(world: &mut World, position: Position, sprite: SpriteRender) {
+pub fn create_box_spot(world: &mut World, position: Position, sprite: SpriteRender, colour: BoxColour) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(
         position.x as f32 * TILE_WIDTH + 0.5 * TILE_WIDTH,
@@ -53,7 +53,7 @@ pub fn create_box_spot(world: &mut World, position: Position, sprite: SpriteRend
         .create_entity()
         .with(transform)
         .with(sprite.clone())
-        .with(BoxSpot {})
+        .with(BoxSpot { colour })
         .with(position)
         .build();
 }

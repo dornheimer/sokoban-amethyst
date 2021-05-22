@@ -10,6 +10,7 @@ use amethyst::ui::{TtfFormat, UiTransform, Anchor, UiText, LineMode};
 use amethyst::core::ecs::Entity;
 use std::fmt;
 use std::fmt::Display;
+use amethyst::renderer::sprite::prefab::SpriteSheetPrefab;
 
 pub const WINDOW_HEIGHT: f32 = 600.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
@@ -74,11 +75,11 @@ fn initialise_level(world: &mut World, assets: &ImageAssets) {
     const MAP: &str = "
     N N W W W W W W
     W W W . . . . W
-    W . . . B . . W
-    W . . . . . . W
+    W . . . BB . . W
+    W . . RB . . . W
     W . P . . . . W
-    W . . . . . . W
-    W . . S . . . W
+    W . . . . RS . W
+    W . . BS . . . W
     W . . . . . . W
     W W W W W W W W
     ";
@@ -88,19 +89,23 @@ fn initialise_level(world: &mut World, assets: &ImageAssets) {
 
 pub struct ImageAssets {
     pub player_sprite: SpriteRender,
-    pub box_sprite: SpriteRender,
-    pub box_spot_sprite: SpriteRender,
+    pub box_red_sprite: SpriteRender,
+    pub box_blue_sprite: SpriteRender,
+    pub box_spot_red_sprite: SpriteRender,
+    pub box_spot_blue_sprite: SpriteRender,
     pub wall_sprite: SpriteRender,
     pub floor_sprite: SpriteRender,
 }
 
 fn load_assets(world: &mut World) -> ImageAssets {
     ImageAssets {
-        player_sprite: create_sprite_render(world, "images/player.png", "images/player.ron"),
-        box_sprite: create_sprite_render(world, "images/box.png", "images/box.ron"),
-        box_spot_sprite: create_sprite_render(world, "images/box_spot.png", "images/box_spot.ron"),
-        wall_sprite: create_sprite_render(world, "images/wall.png", "images/wall.ron"),
-        floor_sprite: create_sprite_render(world, "images/floor.png", "images/floor.ron"),
+        player_sprite: create_sprite_render(world, "images/player.png", "images/sprite_32x32.ron"),
+        box_red_sprite: create_sprite_render(world, "images/box_red.png", "images/sprite_32x32.ron"),
+        box_blue_sprite: create_sprite_render(world, "images/box_blue.png", "images/sprite_32x32.ron"),
+        box_spot_red_sprite: create_sprite_render(world, "images/box_spot_red.png", "images/sprite_32x32.ron"),
+        box_spot_blue_sprite: create_sprite_render(world, "images/box_spot_blue.png", "images/sprite_32x32.ron"),
+        wall_sprite: create_sprite_render(world, "images/wall.png", "images/sprite_32x32.ron"),
+        floor_sprite: create_sprite_render(world, "images/floor.png", "images/sprite_32x32.ron"),
     }
 }
 
