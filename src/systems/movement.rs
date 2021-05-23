@@ -14,6 +14,7 @@ use amethyst::shrev::EventIterator;
 use crate::map::{MAP_HEIGHT, MAP_WIDTH, TILE_WIDTH};
 use crate::components::*;
 use crate::sokoban::Gameplay;
+use crate::events::{MoveEvent, EntityMoved};
 
 #[derive(Debug, Clone, Copy)]
 enum Direction {
@@ -25,7 +26,7 @@ enum Direction {
 
 #[derive(SystemDesc)]
 pub struct MovementSystem {
-    pub reader_id: Option<ReaderId<InputEvent<StringBindings>>>,
+    pub input_reader: Option<ReaderId<InputEvent<StringBindings>>>,
 }
 
 impl<'s> System<'s> for MovementSystem {
@@ -38,11 +39,12 @@ impl<'s> System<'s> for MovementSystem {
         WriteStorage<'s, Position>,
         Read<'s, EventChannel<InputEvent<StringBindings>>>,
         Write<'s, Gameplay>,
+        Write<'s, EventChannel<MoveEvent>>,
     );
 
     fn run(
         &mut self,
-        (mut transforms, entities, players, movables, immovables, mut positions, event_channel, mut gameplay): Self::SystemData,
+        (mut transforms, entities, players, movables, immovables, mut positions, input_events, mut gameplay, mut move_events): Self::SystemData,
     ) {
         let mut to_move = Vec::new();
         let mov: HashMap<(u8, u8), Index> = (&entities, &movables, &positions)
@@ -55,8 +57,8 @@ impl<'s> System<'s> for MovementSystem {
             .collect::<HashMap<_, _>>();
 
         for (_player, position) in (&players, &mut positions).join() {
-            let event_iterator = event_channel
-                .read(self.reader_id.as_mut().unwrap())
+            let event_iterator = input_events
+                .read(self.input_reader.as_mut().unwrap())
                 .into_iter();
             if let Some(direction) = get_direction(event_iterator) {
                 let (start, end, is_x) = match direction {
@@ -82,7 +84,10 @@ impl<'s> System<'s> for MovementSystem {
                     match mov.get(&pos) {
                         Some(id) => to_move.push((direction, id.clone())),
                         None => match immov.get(&pos) {
-                            Some(_id) => to_move.clear(),
+                            Some(_id) => {
+                                to_move.clear();
+                                move_events.single_write(MoveEvent::PlayerHitObstacle);
+                            },
                             None => break,
                         },
                     }
@@ -117,12 +122,14 @@ impl<'s> System<'s> for MovementSystem {
                     }
                 };
             }
+
+            move_events.single_write(MoveEvent::EntityMoved(EntityMoved { id }))
         }
     }
 
     fn setup(&mut self, world: &mut World) {
         <Self as System<'_>>::SystemData::setup(world);
-        self.reader_id = Some(
+        self.input_reader = Some(
             world
                 .fetch_mut::<EventChannel<InputEvent<StringBindings>>>()
                 .register_reader(),

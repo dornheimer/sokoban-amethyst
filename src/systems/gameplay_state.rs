@@ -3,6 +3,8 @@ use crate::sokoban::{Gameplay, GameplayState, GameUi};
 use crate::components::{Position, BoxSpot, Box};
 use std::collections::HashMap;
 use amethyst::ui::UiText;
+use amethyst::core::shrev::EventChannel;
+use crate::events::{MoveEvent, BoxPlacedOnSpot};
 
 pub struct GameplayStateSystem {}
 

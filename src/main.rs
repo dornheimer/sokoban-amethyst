@@ -15,12 +15,15 @@ use amethyst::{
 };
 
 use crate::sokoban::{AnimationId, MyPrefabData, Sokoban};
+use amethyst::audio::AudioBundle;
+use amethyst::utils::fps_counter::FpsCounterBundle;
 
 mod components;
 mod entities;
 mod map;
 mod sokoban;
 mod systems;
+mod events;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -57,8 +60,10 @@ fn main() -> amethyst::Result<()> {
         )?
         .with_bundle(input_bundle)?
         .with_bundle(UiBundle::<StringBindings>::new())?
+        .with_bundle(AudioBundle::default())?
+        .with_bundle(FpsCounterBundle)?
         .with(
-            systems::MovementSystem { reader_id: None },
+            systems::MovementSystem { input_reader: None },
             "movement_system",
             &["input_system"],
         )
@@ -67,7 +72,8 @@ fn main() -> amethyst::Result<()> {
             "gameplay_state_system",
             &[],
         )
-        .with(systems::AnimationSystem {}, "animation_system", &[]);
+        .with(systems::AnimationSystem {}, "animation_system", &[])
+        .with(systems::SoundSystem { move_reader: None }, "sound_system", &[]);
 
     let assets_dir = app_root.join("assets");
     let mut game = Application::new(assets_dir, Sokoban, game_data)?;

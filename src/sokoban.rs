@@ -18,6 +18,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::components::register_components;
 use crate::map::load_map;
+use std::collections::HashMap;
+use amethyst::audio::{SourceHandle, WavFormat};
+use amethyst::utils::fps_counter::FpsCounter;
+use amethyst::core::Time;
 
 pub const WINDOW_HEIGHT: f32 = 600.0;
 pub const WINDOW_WIDTH: f32 = 800.0;
@@ -48,6 +52,17 @@ impl SimpleState for Sokoban {
         world.insert(Gameplay::default());
 
         initialise_ui(world);
+        initialise_audio(world);
+    }
+
+    fn update(&mut self, state_data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        let world = &state_data.world;
+        if world.read_resource::<Time>().frame_number() % 20 == 0 {
+            let fps = world.read_resource::<FpsCounter>().sampled_fps();
+            println!("{}", fps);
+        }
+
+        Trans::None
     }
 }
 
@@ -113,6 +128,32 @@ pub struct ImageAssets {
     pub box_spot_blue_sprite: SpriteRender,
     pub wall_sprite: SpriteRender,
     pub floor_sprite: SpriteRender,
+}
+
+pub struct Sounds {
+    pub correct: SourceHandle,
+    pub incorrect: SourceHandle,
+    pub wall: SourceHandle,
+}
+
+fn load_audio(loader: &Loader, world: &World, file: &str) -> SourceHandle {
+    loader.load(file, WavFormat, (), &world.read_resource())
+}
+
+fn initialise_audio(world: &mut World) {
+    let sound_effects = {
+        let loader = world.read_resource::<Loader>();
+
+        let sound = Sounds {
+            correct: load_audio(&loader, &world, "sounds/correct.wav"),
+            incorrect: load_audio(&loader, &world, "sounds/incorrect.wav"),
+            wall: load_audio(&loader, &world, "sounds/wall.wav"),
+        };
+
+        sound
+    };
+
+    world.insert(sound_effects);
 }
 
 fn load_assets(world: &mut World) -> ImageAssets {
